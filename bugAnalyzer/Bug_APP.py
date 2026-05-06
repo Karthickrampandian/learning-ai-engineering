@@ -10,6 +10,7 @@ class bug_app:
     def run(self):
 
         global result, solution
+        st.set_page_config(layout="wide")
         st.title("Bug Analyzer")
 
         bug_input = st.date_input("Select Report date")
@@ -34,16 +35,48 @@ class bug_app:
                     col3.markdown(f"**Component**\n\n {solution.get('component', '')}")
                     st.markdown("**Suggestion:**")
                     suggestions = solution.get("suggestion",[])
-                    if isinstance(suggestions,list):
-                         for s in suggestions:
-                             st.markdown(f"- {s}")
+                    if isinstance(suggestions,dict):
+                         for role,text in suggestions.items():
+                             st.markdown(f"**{role.title()}:** {text}")
+                    elif isinstance(suggestions, list):
+                        for s in suggestions:
+                            st.markdown(f"- {s}")
                     else:
                         st.write(suggestions)
 
                     code_analysis = solution.get("code_analysis", "")
                     if code_analysis:
                         st.markdown("**🔍 Code Analysis:**")
-                        st.markdown(code_analysis)
+                        if isinstance(code_analysis, dict):
+                            st.write(f"**Bug Location:** {code_analysis.get('bug_location', 'N/A')}")
+                            st.write(f"**Bug Explanation:** {code_analysis.get('explanation', 'N/A')}")
+                            col1,col2 = st.columns(2)
+                            col1.header("**🐛 Buggy Code:**")
+                            buggy = code_analysis.get('bug_code', '').replace('\\n', '\n')
+                            col1.code(buggy, language='javascript')
+
+                            col2.header("**✅ Fixed Code:**")
+                            fixed = code_analysis.get('fix_code', '').replace('\\n', '\n')
+                            col2.code(fixed, language='javascript')
+
+                        if "changed_lines" in code_analysis:
+                            st.write("**📍 What Changed:**")
+                            st.code(code_analysis.get("changed_lines", ""), language='javascript')
+                            st.write("** Verification **")
+                            st.info(code_analysis.get("fix_verification", ""))
+
+                        fix_verification = solution.get("fix_verification", "")
+                        if fix_verification:
+                            verdict = fix_verification.get("verdict", "N/A")
+                            confidence = fix_verification.get("confidence", "N/A")
+                            reason = fix_verification.get("reason", "N/A")
+
+                            if verdict == "APPROVED":
+                                st.success(f"✅ {verdict} — Confidence: {confidence}% | {reason}")
+                            else:
+                                st.warning(f"⚠️ {verdict} — Confidence: {confidence}% | {reason}")
+                        else:
+                            st.markdown(code_analysis)
                     matched_files = solution.get("matched_files", [])
                     if matched_files:
                         st.markdown("**📁 Files Analyzed:**")
@@ -65,6 +98,8 @@ class bug_app:
                 #     mime="text/csv")
             else:
                 st.warning("No bugs found.")
+        st.info(
+            f"Total tokens used — Input: {self.analyser.total_input_tokens} | Output: {self.analyser.total_output_tokens} | Est. cost: ${((self.analyser.total_input_tokens * 0.000015) + (self.analyser.total_output_tokens * 0.000075)):.4f}")
 
         if "bugtable" in st.session_state:
             csv  = st.session_state["bugtable"].to_csv(index=False)
