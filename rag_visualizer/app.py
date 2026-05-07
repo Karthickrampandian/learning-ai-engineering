@@ -1,3 +1,4 @@
+from langsmith import traceable
 import os
 import json
 import re
@@ -176,6 +177,7 @@ class Generation:
 
         return unique_docs, unique_meta, unique_dist
 
+    @traceable(name="RAG Pipeline")
     def ask(self, question):
         #Understand Question
         question_type = self.query_classification(question)
@@ -288,6 +290,7 @@ class Generation:
             top_k = 8
         return top_k
 
+    @traceable(name="Reranking")
     def rerank(self, question, docs, metadatas, distances):
         pairs = [(question,doc) for doc in docs]
         scores = self.cross_encoder.predict(pairs)
@@ -316,7 +319,7 @@ class Generation:
         with open("rag_logs.json","a") as f:
             f.write(json.dumps(data) +"\n")
 
-
+    @traceable(name="LLM generation")
     def llm_generation(self,question,context):
         response = self.llm.messages.create(
             model=self.model,
