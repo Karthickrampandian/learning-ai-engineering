@@ -20,7 +20,7 @@ def get_gen(chunk_size, overlap, mode="fixed"):
 
 def render_results(result):
 
-    st.write("**Answer:**", result["answer"])
+    st.write("**Answer:**", result["answer"].removeprefix("Answer:").strip())
 
     st.metric("Confidence", result.get("confidence","N/A"))
 
@@ -144,7 +144,7 @@ with tabCache:
                 result, cacheHit = gen_cache.semantic_cache(question)
             if cacheHit:
                 st.success("Cache HIT")
-                st.write("**Answer:**", result)
+                st.write("**Answer:**", result.removeprefix("Answer:").strip())
             else:
                 st.info("Cache MISS - fetched fresh")
                 render_results(result)
