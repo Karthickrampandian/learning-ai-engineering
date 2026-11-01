@@ -7,6 +7,7 @@ from pypdf import PdfReader
 import anthropic
 import chromadb
 from rank_bm25 import BM25Okapi
+from langsmith import traceable
 
 
 class Generation:
@@ -41,8 +42,6 @@ class Generation:
             return "factual"
 
     def rewrite_question(self,question,question_type):
-        if question_type == "definition":
-            return question + " in ISO 27001"
         return question
 
     def chunk_text(self, text):
@@ -266,11 +265,10 @@ class Generation:
     def expand_query(self, question, question_type):
         if question_type == "definition":
             return [
-                question,
                 question + " meaning",
-                question + " definition ISO 27001"
+                question + " definition"
             ]
-        return [question]
+        return []
 
     def no_response_return(self):
         return {
